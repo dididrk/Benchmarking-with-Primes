@@ -49,14 +49,14 @@ int miller_rabin(int n, int confidence) {
 
     for (int i = 0; i < confidence; ++i) {
 
-        unsigned long long a = static_cast<unsigned long long>((n - 2)*dist(rng) + 1);
-        //std::cout << a << "\n";
-        if (fastExp(a, q, n) == 1) {
+        a = static_cast<int>((n - 2)*dist(rng) + 1);
+        unsigned long long fastexp_aq = fastExp(a, q, n);
+        if (fastexp_aq == 1) {
             continue;
         }
-        int flag_outer_loop = 0;
+        flag_outer_loop = 0;
         for (int j = 0; j < k; ++j) {
-            if (fastExp(a, (1 << j)*q, n) == n - 1) {
+            if (fastExp(fastexp_aq, (1 << j), n) == n - 1) {
                 flag_outer_loop = 1;
                 break;
             }
