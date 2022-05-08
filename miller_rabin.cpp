@@ -49,7 +49,7 @@ int miller_rabin(int n, int confidence) {
 
     for (int i = 0; i < confidence; ++i) {
 
-        a = static_cast<int>((n - 2)*dist(rng) + 1);
+        unsigned long long a = static_cast<int>((n - 2)*dist(rng) + 1);
         unsigned long long fastexp_aq = fastExp(a, q, n);
         if (fastexp_aq == 1) {
             continue;
