@@ -54,7 +54,7 @@ int miller_rabin(int n, int confidence) {
         if (fastexp_aq == 1) {
             continue;
         }
-        flag_outer_loop = 0;
+        int flag_outer_loop = 0;
         for (int j = 0; j < k; ++j) {
             if (fastExp(fastexp_aq, (1 << j), n) == n - 1) {
                 flag_outer_loop = 1;
