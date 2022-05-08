@@ -16,15 +16,19 @@ std::mt19937 rng(time(0));
 std::uniform_real_distribution<double> dist;
 
 // ------------------------------------------------------------------------------------
-unsigned long long fastExp(unsigned long long a, unsigned long long b, unsigned long long m) {
-    
-    if (b == 0) return 1;
-    a = a % m;
-    unsigned long long temp = fastExp(a, b/2, m);
-    if (b&1)
-        return (((temp * temp)%m)*a)%m;
-    else
-        return (temp * temp)%m;
+unsigned long long fastExp(unsigned long long b, unsigned long long e, unsigned long long m)
+{
+	unsigned long long result = 1;
+	if (1 & e)
+		result = b;
+	while (1) {
+		if (!e) break;
+		e >>= 1;
+		b = (b * b) % m;
+		if (e & 1)
+			result = (result * b) % m;
+	}
+	return result;
 }
 
 int miller_rabin(int n, int confidence) {
