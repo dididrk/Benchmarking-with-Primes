@@ -11,24 +11,12 @@ std::uniform_real_distribution<double> dist;
 // ------------------------------------------------------------------------------------
 unsigned int size_initial_sieve = 5;
 unsigned long long initial_sieve[5] = {0};
-unsigned long long result = 1;
-unsigned long long f = 1;
-unsigned long long q = 1;
-unsigned long long k = 0;
-unsigned long long a = 1;
-unsigned long long fastexp_aq = 1;
-unsigned long long fastexp_aq_j = 1;
-unsigned long long fastexp_aq_j_s = 1;
-unsigned long long s_min = 1;
-unsigned long long s_max = 1;
-unsigned long long number = 1;
-
 unsigned long long count = 3 + size_initial_sieve;
 
 
 unsigned long long fastExp(unsigned long long b, unsigned long long e, unsigned long long m)
 {
-	result = 1;
+	unsigned long long result = 1;
 	if (1 & e)
 		result = b;
 	while (1) {
@@ -43,9 +31,9 @@ unsigned long long fastExp(unsigned long long b, unsigned long long e, unsigned 
 
 unsigned long long miller_rabin(int n, int confidence) {
 
-    q = 1;
-    k = 0;
-    f = n - 1;
+    unsigned long long q = 1;
+    unsigned long long k = 0;
+    unsigned long long f = n - 1;
 
     int k_pow = f & (~(f - 1));
     q = f/k_pow;
@@ -59,15 +47,15 @@ unsigned long long miller_rabin(int n, int confidence) {
 
     for (int i = 0; i < confidence; ++i) {
 
-        a = static_cast<int>((n - 2)*dist(rng) + 1);
-        fastexp_aq = fastExp(a, q, n);
+        unsigned long long a = static_cast<int>((n - 2)*dist(rng) + 1);
+        unsigned long long fastexp_aq = fastExp(a, q, n);
 
         if (fastexp_aq == 1 or fastexp_aq == n - 1)
             continue;
 
-        fastexp_aq_j = fastexp_aq;
+        unsigned long long fastexp_aq_j = fastexp_aq;
         for (int j = 1; j < k; ++j) {
-            fastexp_aq_j_s = (fastexp_aq_j % n); 
+            unsigned long long fastexp_aq_j_s = (fastexp_aq_j % n); 
             fastexp_aq_j = (fastexp_aq_j_s*fastexp_aq_j_s) % n;
             if (fastexp_aq_j == n - 1)
                 goto jump1;
@@ -97,10 +85,9 @@ int how_many_primes(int n_min_, int n_max, int confidence) {
     if (n_min_ < 7)
         n_min = 7;
 
-    int max_threads = omp_get_max_threads();
-    unsigned long long count_array[max_threads] = {0};
-    s_min = static_cast<int>(static_cast<float>(n_min)/6);
-    s_max = static_cast<int>(static_cast<float>(n_max)/6);
+    unsigned long long count_array[omp_get_max_threads()] = {0};
+    unsigned long long s_min = static_cast<int>(static_cast<float>(n_min)/6);
+    unsigned long long s_max = static_cast<int>(static_cast<float>(n_max)/6);
 
     if (miller_rabin(6*s_min + 1, confidence) == 1)
         count += 1;
@@ -121,8 +108,8 @@ int how_many_primes(int n_min_, int n_max, int confidence) {
     #pragma omp parallel num_threads(omp_get_max_threads())
     #pragma omp for
     for (int i = s_min + 1; i < s_max; ++i){
-
-        number = 6*i - 1;
+        unsigned long long number = 6*i - 1;
+        
         for (int j = 0; j < size_initial_sieve; ++j) {
             if (number%initial_sieve[j] == 0)
                 goto jump2;    
@@ -136,8 +123,8 @@ int how_many_primes(int n_min_, int n_max, int confidence) {
     #pragma omp parallel num_threads(omp_get_max_threads())
     #pragma omp for
     for (int i = s_min + 1; i < s_max; ++i){
-        
-        number = 6*i + 1;
+        unsigned long long number = 6*i + 1;
+    
         for (int j = 0; j < size_initial_sieve; ++j) {
             if (number%initial_sieve[j] == 0)
                 goto jump3;
@@ -157,6 +144,11 @@ int how_many_primes(int n_min_, int n_max, int confidence) {
 
 int main(int argc, char** argv) {
 
+    std::ostringstream fn;
+    std::ofstream myfile;
+	fn << "results.txt";
+	myfile.open(fn.str());
+
     int n_min = atoi(argv[1]);
     int n_max = atoi(argv[2]);
     int confidence = atoi(argv[3]);
@@ -169,7 +161,11 @@ int main(int argc, char** argv) {
 
     long elapsed_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
 
-    std::cout << count << "\n";
-    std::cout << static_cast<float>(n_max)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << "\n";
+    //std::cout << count << "\n";
+    //std::cout << static_cast<float>(n_max)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << "\n";
 
+    myfile << count << "\n";
+    myfile << static_cast<float>(n_max)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << "\n";
+
+    myfile.close();
 }
