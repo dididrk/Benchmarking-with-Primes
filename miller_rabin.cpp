@@ -4,15 +4,17 @@
 #include <random>
 #include <chrono>
 #include <omp.h>
+#include </home/darkness/Desktop/ClusterLibraries/eigen-3.4.0/Eigen/Dense>
 
 std::mt19937 rng(time(0));
 std::uniform_real_distribution<double> dist;
 
 // ------------------------------------------------------------------------------------
-unsigned int size_initial_sieve = 5;
-unsigned long long initial_sieve[5] = {0};
-unsigned long long count = 3 + size_initial_sieve;
-
+unsigned int size_initial_sieve = 10;
+unsigned int size_sufficient_witnesses = 3;
+unsigned long long initial_sieve[10] = {0};
+unsigned long long sufficient_witnesses[3] = {2, 7, 61}; // for n < 4,759,123,141
+//unsigned long long count = 3 + size_initial_sieve;
 
 unsigned long long fastExp(unsigned long long b, unsigned long long e, unsigned long long m)
 {
@@ -44,11 +46,11 @@ unsigned long long miller_rabin(int n, int confidence) {
     }
 
     k = k - 1;
+    //std::cout << q << "\n";
+    for (int i = 0; i < size_sufficient_witnesses; ++i) {
 
-    for (int i = 0; i < confidence; ++i) {
-
-        unsigned long long a = static_cast<int>((n - 2)*dist(rng) + 1);
-        unsigned long long fastexp_aq = fastExp(a, q, n);
+        //unsigned long long a = static_cast<int>((n - 2)*dist(rng) + 1);
+        unsigned long long fastexp_aq = fastExp(sufficient_witnesses[i], q, n);
 
         if (fastexp_aq == 1 or fastexp_aq == n - 1)
             continue;
@@ -85,7 +87,8 @@ int how_many_primes(int n_min_, int n_max, int confidence) {
     if (n_min_ < 7)
         n_min = 7;
 
-    unsigned long long count_array[omp_get_max_threads()] = {0};
+    //unsigned long long count_array[omp_get_max_threads()] = {0};
+    unsigned long long count = 0;
     unsigned long long s_min = static_cast<int>(static_cast<float>(n_min)/6);
     unsigned long long s_max = static_cast<int>(static_cast<float>(n_max)/6);
 
@@ -106,7 +109,7 @@ int how_many_primes(int n_min_, int n_max, int confidence) {
     }
 
     #pragma omp parallel num_threads(omp_get_max_threads())
-    #pragma omp for
+    #pragma omp for reduction(+:count)
     for (int i = s_min + 1; i < s_max; ++i){
         unsigned long long number = 6*i - 1;
         
@@ -116,12 +119,12 @@ int how_many_primes(int n_min_, int n_max, int confidence) {
         }
 
         if (miller_rabin(number, confidence) == 1)
-            count_array[omp_get_thread_num()] += 1;
+            count += 1;
         jump2: 1;
     }
     
     #pragma omp parallel num_threads(omp_get_max_threads())
-    #pragma omp for
+    #pragma omp for reduction(+:count)
     for (int i = s_min + 1; i < s_max; ++i){
         unsigned long long number = 6*i + 1;
     
@@ -131,15 +134,14 @@ int how_many_primes(int n_min_, int n_max, int confidence) {
         }
 
         if (miller_rabin(number, confidence) == 1)
-            count_array[omp_get_thread_num()] += 1;
+            count += 1;
         jump3: 1;
     }
+    
+    //for (int j = 0; j < omp_get_max_threads(); j++)
+    //    count += count_array[j];
 
-    #pragma critical
-    for (int j = 0; j < omp_get_max_threads(); j++)
-        count += count_array[j];
-
-    return count;
+    return count + 5 + size_initial_sieve;
 }
 
 int main(int argc, char** argv) {
@@ -161,11 +163,11 @@ int main(int argc, char** argv) {
 
     long elapsed_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
 
-    //std::cout << count << "\n";
-    //std::cout << static_cast<float>(n_max)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << "\n";
+    std::cout << count << "\n";
+    std::cout << static_cast<float>(n_max)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << "\n";
 
-    myfile << count << "\n";
-    myfile << static_cast<float>(n_max)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << "\n";
+    //myfile << count << "\n";
+    //myfile << static_cast<float>(n_max)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << "\n";
 
     myfile.close();
 }
