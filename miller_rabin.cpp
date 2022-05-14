@@ -16,7 +16,6 @@ unsigned int size_initial_sieve = 10;
 unsigned int size_sufficient_witnesses = 7;
 unsigned long long initial_sieve[10] = {0};
 unsigned long long sufficient_witnesses[7] = {2, 3, 5, 7, 11, 13, 17}; // for n < 341,550,071,728,321
-//unsigned long long count = 3 + size_initial_sieve;
 
 unsigned long long fastExp(unsigned long long b, unsigned long long e, unsigned long long m)
 {
@@ -48,7 +47,7 @@ unsigned long long miller_rabin(unsigned long long n, unsigned long long confide
     }
 
     k = k - 1;
-    //std::cout << q << "\n";
+  
     for (int i = 0; i < size_sufficient_witnesses; ++i) {
 
         //unsigned long long a = static_cast<int>((n - 2)*dist(rng) + 1);
@@ -148,9 +147,6 @@ unsigned int how_many_primes(unsigned long long n_min_, unsigned long long n_max
       }
       jump3: 1;
   }
-  
-  //for (int j = 0; j < omp_get_max_threads(); j++)
-  //    count += count_array[j];
 
   if (n_min <= 7)
     return count + size_sufficient_witnesses + size_initial_sieve;
@@ -164,7 +160,11 @@ void continuous_benchmark()
   unsigned long long n_low = 1;
   unsigned long long n_high = 1000000;
   unsigned long long count_total = 0;
-  double number_of_rounds = 1;
+  unsigned long long number_of_rounds = 1;
+  unsigned int n_averages = 1;
+  unsigned int number_of_averages = 100;
+  double moving_average[number_of_averages] = {0};
+  double moving_variance[number_of_averages] = {0};
   double average_speed = 0;
   double std_speed = 0;
 
@@ -177,25 +177,38 @@ void continuous_benchmark()
 
     count_total += count;
     float speed = static_cast<float>(count)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0;
+
+    if (number_of_rounds > number_of_averages)
+    {
+      average_speed -= moving_average[(number_of_rounds - 1)%number_of_averages];
+      std_speed -= moving_variance[(number_of_rounds - 1)%number_of_averages];
+    }
+
     average_speed += speed;
     std_speed += speed*speed;
+    moving_average[(number_of_rounds - 1)%number_of_averages] = speed;
+    moving_variance[(number_of_rounds - 1)%number_of_averages] = speed*speed;
+    if (n_averages > number_of_averages)
+    {
+      n_averages = number_of_averages;
+    }
 
     std::cout << "\033[2J\033[1;1H";
     std::cout << "Primes between 1 and " << static_cast<unsigned long long>(n_high/1000000) << " Million ---- " << count_total << "\n";
     //std::cout << "Instantaneous speed" << std::setprecision(3) << std::fixed << speed << " Million Primes/s" << "\n";
-    std::cout << "Speed " << std::setprecision(3) << std::fixed << average_speed/number_of_rounds << " +- " << sqrt((std_speed - pow(average_speed, 2)/number_of_rounds)/number_of_rounds) <<" Million Primes/s" << "\n";
+    std::cout << "Speed " << std::setprecision(3) << std::fixed << average_speed/n_averages << " +- " << sqrt((std_speed - pow(average_speed, 2)/n_averages)/n_averages) <<" Million Primes/s" << "\n";
     
-    if (n_high == 341550071728321)
+    if (n_high >= 341550071728321)
       break;
 
     n_low = n_high;
     n_high += 1000000;
     number_of_rounds += 1;
+    n_averages += 1;
   }
 }
 
-int main(int argc, char** argv) 
-{
+int main(int argc, char** argv) {    
     set_eratostenes_sieve();
     continuous_benchmark();
 }
