@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include <random>
 #include <chrono>
 #include <omp.h>
@@ -148,8 +149,8 @@ int main(int argc, char** argv) {
 
     std::ostringstream fn;
     std::ofstream myfile;
-	fn << "results.txt";
-	myfile.open(fn.str());
+	  fn << "results.txt";
+	  myfile.open(fn.str());
 
     int n_min = atoi(argv[1]);
     int n_max = atoi(argv[2]);
@@ -163,8 +164,8 @@ int main(int argc, char** argv) {
 
     long elapsed_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
 
-    std::cout << count << "\n";
-    std::cout << static_cast<float>(n_max)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << "\n";
+    std::cout << count << " Primes Found\n";
+    std::cout << std::setprecision(3) << std::fixed << static_cast<float>(count)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << " Million Primes/s" << "\n";
 
     //myfile << count << "\n";
     //myfile << static_cast<float>(n_max)/(static_cast<float>(elapsed_time)*0.000000001)/1000000.0 << "\n";
