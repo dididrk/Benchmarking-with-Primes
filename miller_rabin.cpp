@@ -6,16 +6,17 @@
 #include <random>
 #include <chrono>
 #include <omp.h>
-#include </home/darkness/Desktop/ClusterLibraries/eigen-3.4.0/Eigen/Dense>
 
 std::mt19937 rng(time(0));
 std::uniform_real_distribution<double> dist;
 
 // ------------------------------------------------------------------------------------
+unsigned int num_threads = 1;
 unsigned int size_initial_sieve = 10;
 unsigned int size_sufficient_witnesses = 7;
 unsigned long long initial_sieve[10] = {0};
 unsigned long long sufficient_witnesses[7] = {2, 3, 5, 7, 11, 13, 17}; // for n < 341,550,071,728,321
+// 7,999,252,175,582,851
 
 unsigned long long fastExp(unsigned long long b, unsigned long long e, unsigned long long m)
 {
@@ -114,7 +115,7 @@ unsigned int how_many_primes(unsigned long long n_min_, unsigned long long n_max
       count += 1;
   }
 
-  #pragma omp parallel num_threads(omp_get_max_threads())
+  #pragma omp parallel num_threads(num_threads)
   #pragma omp for reduction(+:count)
   for (unsigned long long i = s_min + 1; i < s_max; ++i){
       unsigned long long number = 6*i - 1;
@@ -131,7 +132,7 @@ unsigned int how_many_primes(unsigned long long n_min_, unsigned long long n_max
       jump2: 1;
   }
 
-  #pragma omp parallel num_threads(omp_get_max_threads())
+  #pragma omp parallel num_threads(num_threads)
   #pragma omp for reduction(+:count)
   for (unsigned long long i = s_min + 1; i < s_max; ++i){
       unsigned long long number = 6*i + 1;
@@ -208,7 +209,26 @@ void continuous_benchmark()
   }
 }
 
-int main(int argc, char** argv) {    
-    set_eratostenes_sieve();
-    continuous_benchmark();
+int main(int argc, char** argv) {
+
+  std::string nthreads;
+  std::cout << "Multithreaded/Single Thread/Specific Threads Test (m/s/n): ";
+  std::cin >> nthreads;
+
+  if (nthreads == "m")
+    num_threads = omp_get_max_threads();
+
+  if (nthreads == "s")
+    num_threads = 1;
+
+  if (nthreads != "m" and nthreads != "s") 
+  {
+    int nthreadss;
+    std::cout << "\nSpecific Number of Threads: ";
+    std::cin >> nthreadss;
+    num_threads = nthreadss;
+  }
+
+  set_eratostenes_sieve();
+  continuous_benchmark();
 }
